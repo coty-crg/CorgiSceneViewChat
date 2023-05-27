@@ -8,6 +8,7 @@ namespace CorgiSceneChat
     public class ChatMessage
     {
         public string username;
-        public string message; 
+        public string message;
+        public long timestamp; 
     }
 }

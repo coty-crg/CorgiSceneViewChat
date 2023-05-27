@@ -12,7 +12,24 @@ namespace CorgiSceneChat
     [Overlay(typeof(SceneView), "Corgi SceneView Chat", defaultLayout: true)]
     public class ChatOverlay : Overlay
     {
-        private List<ChatMessage> _messages = new List<ChatMessage>();
+        private List<ChatMessage> _messages = new List<ChatMessage>()
+        {
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+            new ChatMessage() { username = "test", message = "message "},
+        };
 
         private void RebuildScrollViewContent()
         {
@@ -23,10 +40,17 @@ namespace CorgiSceneChat
                 var messageData = _messages[i];
                 var formatted = $"(<b>{messageData.username}</b>): {messageData.message}";
                 var label = new Label(formatted);
+                label.style.whiteSpace = WhiteSpace.Normal;
 
-                _scrollView.contentContainer.Add(label);
+                _scrollView.Add(label);
             }
 
+            // always add a blank one to the end 
+            // this is a dumb hack so the auto scroll sees the final message 
+            var finalElement = new Label("");
+            _scrollView.Add(finalElement);
+
+            // auto scroll 
             _scrollView.verticalScroller.ScrollPageDown(100);
         }
 
@@ -42,12 +66,11 @@ namespace CorgiSceneChat
                 return;
             }
 
-            var ourUsername = EditorPrefs.GetString("corgichat_username", Environment.UserName);
-
             var newMessage = new ChatMessage()
             {
-                username = ourUsername,
+                username = ChatResources.GetLocalUsername(),
                 message = _chatInput.text,
+                timestamp = System.DateTime.UtcNow.Ticks,
             };
 
             _messages.Add(newMessage);
@@ -67,7 +90,6 @@ namespace CorgiSceneChat
 
         public override VisualElement CreatePanelContent()
         {
-
             var chatResources = ChatResources.FindConfig();
 
             var root = new VisualElement();

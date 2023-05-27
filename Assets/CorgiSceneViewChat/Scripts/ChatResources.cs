@@ -9,8 +9,8 @@ namespace CorgiSceneChat
     public class ChatResources : ScriptableObject
     {
         public Texture2D ChatOptionsIcon;
+        public string ChatServerAddress = "corgichat.coty.tips"; 
 
-#if UNITY_EDITOR
         public static ChatResources FindConfig()
         {
             var guids = AssetDatabase.FindAssets("t:ChatResources");
@@ -38,7 +38,16 @@ namespace CorgiSceneChat
 
             return newAsset;
         }
-#endif
+
+        public static string GetLocalUsername()
+        {
+            return EditorPrefs.GetString(Constants.EditorPrefStrings.Username, Environment.UserName);
+        }
+
+        public static void SetLocalUsername(string username)
+        {
+            EditorPrefs.SetString(Constants.EditorPrefStrings.Username, username);
+        }
     }
 
     [CustomEditor(typeof(ChatResources))]
@@ -58,13 +67,13 @@ namespace CorgiSceneChat
             GUILayout.BeginVertical("GroupBox");
             {
                 GUILayout.Label("Local Settings (this PC only)");
-                var username = EditorPrefs.GetString("corgichat_username", Environment.UserName);
+                var username = ChatResources.GetLocalUsername();
 
                 var newUsername = EditorGUILayout.TextField("Username", username);
 
                 if (username != newUsername)
                 {
-                    EditorPrefs.SetString("corgichat_username", newUsername);
+                    ChatResources.SetLocalUsername(newUsername); 
                 }
             }
 
