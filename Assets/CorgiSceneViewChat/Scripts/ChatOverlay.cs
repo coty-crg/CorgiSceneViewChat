@@ -60,7 +60,7 @@ namespace CorgiSceneChat
                     overlay._dirty = true; 
                 }
             }
-        }
+        } 
 
         private void RebuildScrollViewContent()
         {

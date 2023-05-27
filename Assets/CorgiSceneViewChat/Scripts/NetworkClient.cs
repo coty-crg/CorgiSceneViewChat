@@ -44,7 +44,7 @@ namespace CorgiSceneChat
                 return editorClient;
             }
 
-            editorClient = new NetworkClient();
+            editorClient = new NetworkClient(); 
             editorClient.Initialize();
 
             return editorClient; 
@@ -77,7 +77,17 @@ namespace CorgiSceneChat
                 Debug.Log($"[client]: Successful bind, {clientLocalEndpoint.Address}:{clientLocalEndpoint.Port}");
             }
 
-            clientSocket.BeginConnect(clientRemoteEndpoint, OnBeginConnect, clientSocket); 
+            clientSocket.BeginConnect(clientRemoteEndpoint, OnBeginConnect, clientSocket);
+
+            SendMessage(new NetworkMessageChangeChannel()
+            {
+                channel = chatResources.ChatChannel
+            });
+
+            SendMessage(new NetworkMessageSetUsername()
+            {
+                username = ChatResources.GetLocalUsername(),
+            });
         }
 
         private void OnBeginConnect(IAsyncResult result)
@@ -93,17 +103,19 @@ namespace CorgiSceneChat
                 Debug.LogError($"[client]: Failed to connect to {clientSocket.RemoteEndPoint}"
                     + $" / local: {clientSocket.LocalEndPoint}");
                 Debug.LogException(e);
+                return; 
             }
 
             _clientThread = new Thread(() => NetworkLoop());
             _clientThread.Name = "CorgiNetThread";
             _clientThread.IsBackground = true; 
-            _clientThread.Start();  
+            _clientThread.Start();
+
         }
 
         private void NetworkLoop()
         {
-            while(_running)
+            while (_running)
             {
                 Thread.Sleep(16);
 
@@ -134,7 +146,7 @@ namespace CorgiSceneChat
                                 }
                             }
                         }
-                    }
+                    } 
 
                     // send messages 
                     while (_sendQueue.TryDequeue(out var sendMessage))
@@ -200,7 +212,6 @@ namespace CorgiSceneChat
 
             if(clientSocket != null)
             {
-                clientSocket.Disconnect(false);
                 clientSocket.Dispose();
                 clientSocket = null;   
             }
