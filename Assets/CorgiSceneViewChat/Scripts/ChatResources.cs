@@ -9,7 +9,15 @@ namespace CorgiSceneChat
     public class ChatResources : ScriptableObject
     {
         public Texture2D ChatOptionsIcon;
-        public string ChatServerAddress = "corgichat.coty.tips"; 
+
+        [Tooltip("Leave this on it's default value (corgichat.coty.tips) unless you are running your own chat server.")] 
+        public string ChatServerAddress = "127.0.0.1";
+
+        [Tooltip("Leave this on it's default value (8008) unless you are running your own chat server.")] 
+        public int ChatServerPort = 8008;
+        
+        [Tooltip("Set this to your project's name, or some other unique value so you do not get messages from unknown users.")] 
+        public string ChatChannel = "default"; 
 
         public static ChatResources FindConfig()
         {
@@ -76,7 +84,19 @@ namespace CorgiSceneChat
                     ChatResources.SetLocalUsername(newUsername); 
                 }
             }
+            GUILayout.EndVertical();
 
+            GUILayout.BeginVertical("GroupBox");
+            {
+                if(GUILayout.Button("reconnect"))
+                {
+                    Debug.Log($"Resetting connection to chat server.");
+
+                    var networkClient = NetworkClient.GetNetworkClient();
+                        networkClient.Shutdown();
+                        networkClient.Initialize(); 
+                }
+            }
             GUILayout.EndVertical();
         }
     }

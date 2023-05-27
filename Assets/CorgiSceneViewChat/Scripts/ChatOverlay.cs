@@ -12,24 +12,55 @@ namespace CorgiSceneChat
     [Overlay(typeof(SceneView), "Corgi SceneView Chat", defaultLayout: true)]
     public class ChatOverlay : Overlay
     {
-        private List<ChatMessage> _messages = new List<ChatMessage>()
+        private static List<ChatMessage> _messages = new List<ChatMessage>();
+        private static List<ChatOverlay> _overlays = new List<ChatOverlay>();
+
+        private bool _dirty;
+        private bool _needsScrollDown;
+
+        public override void OnCreated()
         {
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-            new ChatMessage() { username = "test", message = "message "},
-        };
+            base.OnCreated();
+            _overlays.Add(this);
+
+            UnityEditor.EditorApplication.update += EditorUpdate;
+        }
+
+        public override void OnWillBeDestroyed()
+        {
+            base.OnWillBeDestroyed();
+            _overlays.Remove(this); 
+
+            UnityEditor.EditorApplication.update -= EditorUpdate;
+        }
+
+        private void EditorUpdate()
+        {
+            if(_needsScrollDown)
+            {
+                _needsScrollDown = false;
+                _scrollView.verticalScroller.ScrollPageDown(100);
+            }
+
+            if(_dirty)
+            {
+                _dirty = false;
+                RebuildScrollViewContent(); 
+            }
+        }
+
+        public static void OnChatMessageReceived(ChatMessage message) 
+        {
+            _messages.Add(message);
+
+            foreach(var overlay in _overlays)
+            {
+                if(overlay != null)
+                {
+                    overlay._dirty = true; 
+                }
+            }
+        }
 
         private void RebuildScrollViewContent()
         {
@@ -51,7 +82,7 @@ namespace CorgiSceneChat
             _scrollView.Add(finalElement);
 
             // auto scroll 
-            _scrollView.verticalScroller.ScrollPageDown(100);
+            _needsScrollDown = true;
         }
 
         private void OnChatSubmit(KeyDownEvent e)
@@ -73,7 +104,14 @@ namespace CorgiSceneChat
                 timestamp = System.DateTime.UtcNow.Ticks,
             };
 
-            _messages.Add(newMessage);
+            // _messages.Add(newMessage);
+
+            var networkClient = NetworkClient.GetNetworkClient();
+            networkClient.SendMessage(new NetworkMessageChatMessage()
+            {
+                chatMessage = newMessage,
+            });
+
             _chatInput.SetValueWithoutNotify(string.Empty);
 
             RebuildScrollViewContent();
@@ -92,7 +130,7 @@ namespace CorgiSceneChat
         {
             var chatResources = ChatResources.FindConfig();
 
-            var root = new VisualElement();
+            var root = new VisualElement(); 
 
             _scrollView = new ScrollView(ScrollViewMode.Vertical);
             _scrollView.style.minWidth = 512;
