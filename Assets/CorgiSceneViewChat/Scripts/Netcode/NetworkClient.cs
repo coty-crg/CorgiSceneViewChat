@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEditor.MemoryProfiler;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace CorgiSceneChat
 {
@@ -41,6 +42,11 @@ namespace CorgiSceneChat
         {
             if(editorClient != null)
             {
+                if(!editorClient._running)
+                {
+                    editorClient.Initialize();
+                }
+
                 return editorClient;
             }
 
@@ -69,12 +75,8 @@ namespace CorgiSceneChat
             var success_bind = TryBindPortRange(clientSocket, ref clientLocalEndpoint);
             if (!success_bind)
             {
-                Debug.LogError($"[client]: Failed to connect to {clientLocalEndpoint.Address}:{clientLocalEndpoint.Port}"); 
+                ChatOverlay.Log($"Failed to connect to the chat server at {clientLocalEndpoint.Address}:{clientLocalEndpoint.Port}"); 
                 return;
-            }
-            else
-            {
-                Debug.Log($"[client]: Successful bind, {clientLocalEndpoint.Address}:{clientLocalEndpoint.Port}");
             }
 
             clientSocket.BeginConnect(clientRemoteEndpoint, OnBeginConnect, clientSocket);
@@ -88,6 +90,11 @@ namespace CorgiSceneChat
             {
                 username = ChatResources.GetLocalUsername(),
             });
+
+            SendMessage(new NetworkMessageOpenedScene()
+            {
+                sceneName = SceneManager.GetActiveScene().name
+            });
         }
 
         private void OnBeginConnect(IAsyncResult result)
@@ -95,13 +102,11 @@ namespace CorgiSceneChat
             try
             {
                 clientSocket.EndConnect(result);
-
-                Debug.Log("[client]: Connected!");
+                ChatOverlay.Log("Connected to chat server.");
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"[client]: Failed to connect to {clientSocket.RemoteEndPoint}"
-                    + $" / local: {clientSocket.LocalEndPoint}");
+                ChatOverlay.Log($"[client]: Failed to connect to \nremote:{clientSocket.RemoteEndPoint}\nlocal: {clientSocket.LocalEndPoint}");
                 Debug.LogException(e);
                 return; 
             }
@@ -159,7 +164,10 @@ namespace CorgiSceneChat
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogException(e); 
+                    ChatOverlay.Log("You have been disconnected from the server.");
+                    Debug.LogException(e);
+                    Shutdown(); 
+                    break; 
                 }
             }
         }

@@ -9,6 +9,7 @@ namespace CorgiSceneChat
     {
         public string username;
         public string message;
-        public long timestamp; 
+        public long timestamp;
+        public bool systemMessage;
     }
 }

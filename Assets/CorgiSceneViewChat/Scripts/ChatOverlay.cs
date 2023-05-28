@@ -8,6 +8,7 @@ namespace CorgiSceneChat
     using UnityEngine.UIElements;
     using UnityEditor.EditorTools;
     using System;
+    using UnityEngine.SceneManagement;
 
     [Overlay(typeof(SceneView), "Corgi SceneView Chat", defaultLayout: true)]
     public class ChatOverlay : Overlay
@@ -24,6 +25,16 @@ namespace CorgiSceneChat
             _overlays.Add(this);
 
             UnityEditor.EditorApplication.update += EditorUpdate;
+            UnityEditor.SceneManagement.EditorSceneManager.sceneOpened += OnSceneOpened;
+        }
+
+        private void OnSceneOpened(Scene scene, UnityEditor.SceneManagement.OpenSceneMode mode)
+        {
+            var networkClient = NetworkClient.GetNetworkClient();
+            networkClient.SendMessage(new NetworkMessageOpenedScene()
+            {
+                sceneName = scene.name,
+            });
         }
 
         public override void OnWillBeDestroyed()
@@ -32,6 +43,7 @@ namespace CorgiSceneChat
             _overlays.Remove(this); 
 
             UnityEditor.EditorApplication.update -= EditorUpdate;
+            UnityEditor.SceneManagement.EditorSceneManager.sceneOpened -= OnSceneOpened;
         }
 
         private void EditorUpdate()
@@ -40,11 +52,14 @@ namespace CorgiSceneChat
             {
                 _needsScrollDown = false;
                 _scrollView.verticalScroller.ScrollPageDown(100);
+
             }
 
             if(_dirty)
             {
                 _dirty = false;
+                // collapsed = false;
+                
                 RebuildScrollViewContent(); 
             }
         }
@@ -57,10 +72,21 @@ namespace CorgiSceneChat
             {
                 if(overlay != null)
                 {
-                    overlay._dirty = true; 
+                    overlay._dirty = true;
                 }
             }
         } 
+
+        public static void Log(string message)
+        {
+            OnChatMessageReceived(new ChatMessage()
+            {
+                message = message,
+                systemMessage = true,
+                username = "syste",
+                timestamp = System.DateTime.UtcNow.Ticks,
+            });
+        }
 
         private void RebuildScrollViewContent()
         {
@@ -69,7 +95,14 @@ namespace CorgiSceneChat
             for (var i = 0; i < _messages.Count; ++i)
             {
                 var messageData = _messages[i];
+
                 var formatted = $"(<b>{messageData.username}</b>): {messageData.message}";
+
+                if(messageData.systemMessage)
+                {
+                    formatted = $"<i>{messageData.message}</i>";
+                }
+
                 var label = new Label(formatted);
                 label.style.whiteSpace = WhiteSpace.Normal;
 
@@ -164,7 +197,10 @@ namespace CorgiSceneChat
             root.Add(_scrollView);
             root.Add(submitChatGroup);
 
-            RebuildScrollViewContent();
+            RebuildScrollViewContent();  
+
+            // initializes connection 
+            NetworkClient.GetNetworkClient();
 
             return root;
         }
