@@ -90,7 +90,7 @@ namespace CorgiSceneChat
             {
                 if(GUILayout.Button("reconnect"))
                 {
-                    Debug.Log($"Resetting connection to chat server.");
+                    ChatOverlay.Log($"Resetting connection to chat server.");
 
                     var networkClient = NetworkClient.GetNetworkClient();
                         networkClient.Shutdown();

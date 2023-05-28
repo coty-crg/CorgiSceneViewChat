@@ -62,23 +62,26 @@ namespace CorgiSceneChat
 
             var chatResources = ChatResources.FindConfig();
             var chatAddress = chatResources.ChatServerAddress;
-            var chatIpAddress = IPAddress.Parse(chatAddress);
-            
+
+            if(!IPAddress.TryParse(chatAddress, out var chatIpAddress))
+            {
+                var dnsEntry = Dns.GetHostEntry(chatAddress);
+                if(dnsEntry.AddressList.Length == 0)
+                {
+                    ChatOverlay.Log($"Couldn't find DNS entry for {chatAddress}");
+                    return; 
+                }
+
+                chatIpAddress = dnsEntry.AddressList[0];
+
+                // debug 
+                // ChatOverlay.Log($"{chatAddress} resolved to {chatIpAddress}");
+            }
+
             var clientRemoteEndpoint = new IPEndPoint(chatIpAddress, chatResources.ChatServerPort);
             var clientLocalEndpoint = new IPEndPoint(GetLocalIpAddress(AddressFamily.InterNetwork), chatResources.ChatServerPort + 1); 
 
             clientSocket = new Socket(clientLocalEndpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            clientSocket.LingerState = new LingerOption(false, 0);
-            clientSocket.NoDelay = true;
-            clientSocket.Blocking = false;
-
-            var success_bind = TryBindPortRange(clientSocket, ref clientLocalEndpoint);
-            if (!success_bind)
-            {
-                ChatOverlay.Log($"Failed to connect to the chat server at {clientLocalEndpoint.Address}:{clientLocalEndpoint.Port}"); 
-                return;
-            }
-
             clientSocket.BeginConnect(clientRemoteEndpoint, OnBeginConnect, clientSocket);
 
             SendMessage(new NetworkMessageChangeChannel()
@@ -106,7 +109,7 @@ namespace CorgiSceneChat
             }
             catch (System.Exception e)
             {
-                ChatOverlay.Log($"[client]: Failed to connect to \nremote:{clientSocket.RemoteEndPoint}\nlocal: {clientSocket.LocalEndPoint}");
+                ChatOverlay.Log($"<color=red>Failed to connect to the chat server.</color>");
                 Debug.LogException(e);
                 return; 
             }
@@ -167,7 +170,7 @@ namespace CorgiSceneChat
                     ChatOverlay.Log("You have been disconnected from the server.");
                     ChatOverlay.Log(e.Message);
                     ChatOverlay.Log(e.StackTrace);
-                    Shutdown(); 
+                    Shutdown();  
                     break; 
                 }
             }
@@ -189,30 +192,6 @@ namespace CorgiSceneChat
             }
 
             return null;
-        }
-
-        public static bool TryBindPortRange(Socket socket, ref IPEndPoint endpoint)
-        {
-            var startPort = endpoint.Port;
-            var endPort = startPort + 16;
-            for (var port = startPort; port < endPort; ++port)
-            {
-                endpoint = new IPEndPoint(endpoint.Address, port);
-
-                try
-                {
-                    socket.Bind(endpoint);
-                    return true;
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogException(e);
-                    Debug.LogWarning($"TryBindPortRange(): Failed to bind {endpoint.Address}:{port}");
-                    continue;
-                }
-            }
-
-            return false;
         }
 
         public void Shutdown()
