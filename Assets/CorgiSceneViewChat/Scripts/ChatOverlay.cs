@@ -171,6 +171,8 @@ namespace CorgiSceneChat
 
         private bool _focused;
         private VisualElement _root;
+        private Button _optionsButton;
+        private Image _optionsIcon;
 
         private void OnInputFocusEvent(FocusEvent e)
         {
@@ -178,6 +180,9 @@ namespace CorgiSceneChat
             _automaticallyOpened = false; 
             _scrollView.style.minHeight = 32;
             _scrollView.style.maxHeight = 128;
+
+            _root.style.color = new Color(0.90f, 0.90f, 0.90f, 1.00f);
+            _optionsIcon.tintColor = new Color(0.90f, 0.90f, 0.90f, 1.00f);
         }
 
         private void OnInputFocusLostEvent(FocusOutEvent e)
@@ -185,7 +190,10 @@ namespace CorgiSceneChat
             _focused = false;
             _automaticallyOpened = false;
             _scrollView.style.minHeight = 0;
-            _scrollView.style.maxHeight = 0; 
+            _scrollView.style.maxHeight = 0;
+
+            _root.style.color = Color.clear;
+            _optionsIcon.tintColor = Color.clear;
         }
 
         public override VisualElement CreatePanelContent()
@@ -216,21 +224,22 @@ namespace CorgiSceneChat
             var submitChatGroup = new VisualElement();
             submitChatGroup.style.flexDirection = FlexDirection.Row;
 
-            var chatOptionsButton = new Button();
-            chatOptionsButton.RegisterCallback<ClickEvent>(OnOptionsButton);
+            _optionsButton = new Button();
+            _optionsButton.RegisterCallback<ClickEvent>(OnOptionsButton);
+            _optionsButton.style.backgroundColor = Color.clear;
 
-            var chatOptionsIcon = new Image();
-            chatOptionsIcon.image = chatResources.ChatOptionsIcon;
-            chatOptionsIcon.style.minWidth = 20;
-            chatOptionsIcon.style.maxWidth = 20;
-            chatOptionsIcon.style.minHeight = 20;
-            chatOptionsIcon.style.maxHeight = 20;
-
-            chatOptionsButton.Add(chatOptionsIcon);
+            _optionsIcon = new Image();
+            _optionsIcon.image = chatResources.ChatOptionsIcon;
+            _optionsIcon.style.minWidth = 20;
+            _optionsIcon.style.maxWidth = 20;
+            _optionsIcon.style.minHeight = 20;
+            _optionsIcon.style.maxHeight = 20;
+            
+            _optionsButton.Add(_optionsIcon);
 
             submitChatGroup.Add(new Label($"{ChatResources.GetLocalUsername()}: "));
             submitChatGroup.Add(_chatInput);
-            submitChatGroup.Add(chatOptionsButton);
+            submitChatGroup.Add(_optionsButton);
 
             _root.Add(_scrollView);
             _root.Add(submitChatGroup);
