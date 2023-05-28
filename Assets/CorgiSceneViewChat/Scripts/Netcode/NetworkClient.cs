@@ -165,7 +165,8 @@ namespace CorgiSceneChat
                 catch (System.Exception e)
                 {
                     ChatOverlay.Log("You have been disconnected from the server.");
-                    Debug.LogException(e);
+                    ChatOverlay.Log(e.Message);
+                    ChatOverlay.Log(e.StackTrace);
                     Shutdown(); 
                     break; 
                 }

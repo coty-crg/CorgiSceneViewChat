@@ -18,6 +18,11 @@ namespace CorgiSceneChat
 
         private bool _dirty;
         private bool _needsScrollDown;
+        private bool _automaticallyOpened;
+        private DateTime _autoOpenedAtTime;
+
+        private ScrollView _scrollView;
+        private TextField _chatInput;
 
         public override void OnCreated()
         {
@@ -60,7 +65,19 @@ namespace CorgiSceneChat
                 _dirty = false;
                 // collapsed = false;
                 
-                RebuildScrollViewContent(); 
+                RebuildScrollViewContent();
+
+                if(!_focused)
+                {
+                    OnInputFocusEvent(null);
+                    _automaticallyOpened = true;
+                    _autoOpenedAtTime = System.DateTime.UtcNow;
+                }
+            }
+
+            if(_automaticallyOpened && System.DateTime.UtcNow > _autoOpenedAtTime + new TimeSpan(0, 0, 0, 5, 0))
+            {
+                OnInputFocusLostEvent(null); 
             }
         }
 
@@ -105,14 +122,10 @@ namespace CorgiSceneChat
 
                 var label = new Label(formatted);
                 label.style.whiteSpace = WhiteSpace.Normal;
+                label.style.maxWidth = 512; 
 
                 _scrollView.Add(label);
             }
-
-            // always add a blank one to the end 
-            // this is a dumb hack so the auto scroll sees the final message 
-            var finalElement = new Label("");
-            _scrollView.Add(finalElement);
 
             // auto scroll 
             _needsScrollDown = true;
@@ -156,24 +169,49 @@ namespace CorgiSceneChat
             Selection.SetActiveObjectWithContext(chatResources, null);
         }
 
-        private ScrollView _scrollView;
-        private TextField _chatInput;
+        private bool _focused;
+        private VisualElement _root;
+
+        private void OnInputFocusEvent(FocusEvent e)
+        {
+            _focused = true; 
+            _automaticallyOpened = false; 
+            _scrollView.style.minHeight = 32;
+            _scrollView.style.maxHeight = 128;
+        }
+
+        private void OnInputFocusLostEvent(FocusOutEvent e)
+        {
+            _focused = false;
+            _automaticallyOpened = false;
+            _scrollView.style.minHeight = 0;
+            _scrollView.style.maxHeight = 0; 
+        }
 
         public override VisualElement CreatePanelContent()
         {
             var chatResources = ChatResources.FindConfig();
 
-            var root = new VisualElement(); 
+            _root = new VisualElement();
 
+            _root.RegisterCallback<FocusEvent>(OnInputFocusEvent);
+            _root.RegisterCallback<FocusOutEvent>(OnInputFocusLostEvent);
+            
             _scrollView = new ScrollView(ScrollViewMode.Vertical);
             _scrollView.style.minWidth = 512;
             _scrollView.style.minHeight = 32;
             _scrollView.style.maxHeight = 128;
 
+            _scrollView.RegisterCallback<FocusEvent>(OnInputFocusEvent);
+            _scrollView.RegisterCallback<FocusOutEvent>(OnInputFocusLostEvent);
+
             _chatInput = new TextField(256, false, false, '*');
             _chatInput.RegisterCallback<KeyDownEvent>(OnChatSubmit);
             _chatInput.style.minWidth = 432;
             _chatInput.style.maxWidth = 432;
+
+            _chatInput.RegisterCallback<FocusEvent>(OnInputFocusEvent);
+            _chatInput.RegisterCallback<FocusOutEvent>(OnInputFocusLostEvent);
 
             var submitChatGroup = new VisualElement();
             submitChatGroup.style.flexDirection = FlexDirection.Row;
@@ -190,19 +228,19 @@ namespace CorgiSceneChat
 
             chatOptionsButton.Add(chatOptionsIcon);
 
-            submitChatGroup.Add(new Label("user: "));
+            submitChatGroup.Add(new Label($"{ChatResources.GetLocalUsername()}: "));
             submitChatGroup.Add(_chatInput);
             submitChatGroup.Add(chatOptionsButton);
 
-            root.Add(_scrollView);
-            root.Add(submitChatGroup);
+            _root.Add(_scrollView);
+            _root.Add(submitChatGroup);
 
             RebuildScrollViewContent();  
 
             // initializes connection 
             NetworkClient.GetNetworkClient();
 
-            return root;
+            return _root;
         }
     }
 }

@@ -15,4 +15,4 @@ MonoBehaviour:
   ChatOptionsIcon: {fileID: 2800000, guid: af6cc6a19fbac8d44a58dfd9dae6c5c2, type: 3}
   ChatServerAddress: 192.168.56.1
   ChatServerPort: 8008
-  ChatChannel: default
+  ChatChannel: Global
