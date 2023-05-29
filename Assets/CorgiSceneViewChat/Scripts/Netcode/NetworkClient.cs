@@ -110,15 +110,14 @@ namespace CorgiSceneChat
             catch (System.Exception e)
             {
                 ChatOverlay.Log($"<color=red>Failed to connect to the chat server.</color>");
-                Debug.LogException(e);
+                ChatOverlay.Log($"{e.Message}");
                 return; 
-            }
+            }  
 
             _clientThread = new Thread(() => NetworkLoop());
             _clientThread.Name = "CorgiNetThread";
             _clientThread.IsBackground = true; 
             _clientThread.Start();
-
         }
 
         private void NetworkLoop()
