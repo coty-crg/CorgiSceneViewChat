@@ -19,6 +19,7 @@ namespace CorgiSceneChat
         private ConcurrentQueue<NetworkMessage> _sendQueue = new ConcurrentQueue<NetworkMessage>();
         private Thread _clientThread;
         private bool _running;
+        private bool _connected;
         private byte[] _receiveBuffer = new byte[1024 * 16];
         private byte[] _sendBuffer = new byte[1024 * 16];
 
@@ -59,6 +60,7 @@ namespace CorgiSceneChat
         public void Initialize()
         {
             _running = true;
+            _connected = false;
 
             var chatResources = ChatResources.FindConfig();
             var chatAddress = chatResources.ChatServerAddress;
@@ -114,6 +116,7 @@ namespace CorgiSceneChat
                 return; 
             }  
 
+            _connected = true;
             _clientThread = new Thread(() => NetworkLoop());
             _clientThread.Name = "CorgiNetThread";
             _clientThread.IsBackground = true; 
@@ -196,8 +199,9 @@ namespace CorgiSceneChat
         public void Shutdown()
         {
             _running = false;
+            _connected = false;
 
-            if(clientSocket != null)
+            if (clientSocket != null)
             {
                 clientSocket.Dispose();
                 clientSocket = null;   
@@ -208,6 +212,11 @@ namespace CorgiSceneChat
                 _clientThread.Abort();
                 _clientThread = null; 
             }
+        }
+
+        public bool GetIsConnected()
+        {
+            return _connected;
         }
     }
 }

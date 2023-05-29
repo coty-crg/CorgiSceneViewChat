@@ -9,6 +9,8 @@ namespace CorgiSceneChat
     public class ChatResources : ScriptableObject
     {
         public Texture2D ChatOptionsIcon;
+        public Texture2D IconStatusOnline;
+        public Texture2D IconStatusOffline;
 
         [Tooltip("Leave this on it's default value (corgichat.coty.tips) unless you are running your own chat server.")] 
         public string ChatServerAddress = "127.0.0.1";
@@ -55,49 +57,6 @@ namespace CorgiSceneChat
         public static void SetLocalUsername(string username)
         {
             EditorPrefs.SetString(Constants.EditorPrefStrings.Username, username);
-        }
-    }
-
-    [CustomEditor(typeof(ChatResources))]
-    public class ChatResourcesEditor : Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            // draw default inspector (project settings)
-            GUILayout.BeginVertical("GroupBox");
-            {
-                GUILayout.Label("Project Settings (shared)");
-                base.OnInspectorGUI();
-            }
-            GUILayout.EndVertical();
-
-            // draw custom inspector (editor prefs settings) 
-            GUILayout.BeginVertical("GroupBox");
-            {
-                GUILayout.Label("Local Settings (this PC only)");
-                var username = ChatResources.GetLocalUsername();
-
-                var newUsername = EditorGUILayout.TextField("Username", username);
-
-                if (username != newUsername)
-                {
-                    ChatResources.SetLocalUsername(newUsername); 
-                }
-            }
-            GUILayout.EndVertical();
-
-            GUILayout.BeginVertical("GroupBox");
-            {
-                if(GUILayout.Button("reconnect"))
-                {
-                    ChatOverlay.Log($"Resetting connection to chat server.");
-
-                    var networkClient = NetworkClient.GetNetworkClient();
-                        networkClient.Shutdown();
-                        networkClient.Initialize(); 
-                }
-            }
-            GUILayout.EndVertical();
         }
     }
 }
