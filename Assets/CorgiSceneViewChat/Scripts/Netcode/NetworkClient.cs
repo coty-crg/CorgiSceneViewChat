@@ -58,13 +58,18 @@ namespace CorgiSceneChat
 
                 if(GlobalObjectId.TryParse(message.SelectedGlobalObjectId, out var transformObjectId))
                 {
-                    var transformObject = (Transform) GlobalObjectId.GlobalObjectIdentifierToObjectSlow(transformObjectId);
-                    if(transformObject != null)
+                    var unityObject = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(transformObjectId);
+                    if(unityObject != null)
                     {
-                        transformObject.position = trackedClient.GizmoPosition;
-                        transformObject.rotation = trackedClient.GizmoRotation;
-                        transformObject.localScale = trackedClient.GizmoScale;
-                        EditorUtility.SetDirty(transformObject);
+                        var transformObject = unityObject as Transform;
+                        if(transformObject != null)
+                        {
+                            transformObject.position = trackedClient.GizmoPosition;
+                            transformObject.rotation = trackedClient.GizmoRotation;
+                            transformObject.localScale = trackedClient.GizmoScale;
+
+                            EditorUtility.SetDirty(transformObject);
+                        }
                     }
                 }
             }
