@@ -9,6 +9,7 @@ namespace CorgiSceneChat
     using UnityEditor.EditorTools;
     using System;
     using UnityEngine.SceneManagement;
+    using UnityEditor.VersionControl;
 
     [Overlay(typeof(SceneView), "Corgi SceneView Chat")]
     public class ChatOverlay : Overlay
@@ -82,6 +83,26 @@ namespace CorgiSceneChat
 
                 Handles.color = Color.green;
                 Handles.DrawLine(center, center + up);
+
+                if (!string.IsNullOrEmpty(otherClient.SelectedTransformStr))
+                {
+                    if (GlobalObjectId.TryParse(otherClient.SelectedTransformStr, out var transformObjectId))
+                    {
+                        var unityObject = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(transformObjectId);
+                        if (unityObject != null)
+                        {
+                            var transformObject = unityObject as Transform;
+                            if (transformObject != null)
+                            {
+                                transformObject.position = otherClient.GizmoPosition;
+                                transformObject.rotation = otherClient.GizmoRotation;
+                                transformObject.localScale = otherClient.GizmoScale;
+
+                                EditorUtility.SetDirty(transformObject);
+                            }
+                        }
+                    }
+                }
             }
         }
 

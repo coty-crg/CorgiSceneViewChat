@@ -13,5 +13,6 @@ namespace CorgiSceneChat
         public Vector3 GizmoPosition;
         public Quaternion GizmoRotation;
         public Vector3 GizmoScale;
+        public string SelectedTransformStr;
     }
 }
