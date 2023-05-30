@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 
 namespace CorgiSceneChat
 {
@@ -81,7 +82,34 @@ namespace CorgiSceneChat
             return result;
         }
 
+        public static ulong ReadBuffer_UInt64(byte[] buffer, ref int index)
+        {
+            ulong byte0 = (ulong)buffer[index++] << 0;
+            ulong byte1 = (ulong)buffer[index++] << 8;
+            ulong byte2 = (ulong)buffer[index++] << 16;
+            ulong byte3 = (ulong)buffer[index++] << 24;
+            ulong byte4 = (ulong)buffer[index++] << 32;
+            ulong byte5 = (ulong)buffer[index++] << 40;
+            ulong byte6 = (ulong)buffer[index++] << 48;
+            ulong byte7 = (ulong)buffer[index++] << 56;
+
+            ulong result = byte0 | byte1 | byte2 | byte3 | byte4 | byte5 | byte6 | byte7;
+            return result;
+        }
+
         public static void WriteBuffer_Int64(byte[] buffer, ref int index, long value)
+        {
+            buffer[index++] = (byte)(value >> 00);
+            buffer[index++] = (byte)(value >> 08);
+            buffer[index++] = (byte)(value >> 16);
+            buffer[index++] = (byte)(value >> 24);
+            buffer[index++] = (byte)(value >> 32);
+            buffer[index++] = (byte)(value >> 40);
+            buffer[index++] = (byte)(value >> 48);
+            buffer[index++] = (byte)(value >> 56);
+        }
+
+        public static void WriteBuffer_UInt64(byte[] buffer, ref int index, ulong value)
         {
             buffer[index++] = (byte)(value >> 00);
             buffer[index++] = (byte)(value >> 08);
@@ -182,5 +210,9 @@ namespace CorgiSceneChat
 
             return default;
         }
+
+
+
+
     }
 }

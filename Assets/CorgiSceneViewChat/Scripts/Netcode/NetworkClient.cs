@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using UnityEditor;
 using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -53,7 +54,19 @@ namespace CorgiSceneChat
                 trackedClient.GizmoMode = message.gizmoMode;
                 trackedClient.GizmoPosition = new Vector3(message.Position_x, message.Position_y, message.Position_z);
                 trackedClient.GizmoRotation = new Quaternion(message.Rotation_x, message.Rotation_y, message.Rotation_z, message.Rotation_w);
-                trackedClient.GizmoScale = new Vector3(message.Scale_x, message.Scale_y, message.Scale_z); 
+                trackedClient.GizmoScale = new Vector3(message.Scale_x, message.Scale_y, message.Scale_z);
+
+                if(GlobalObjectId.TryParse(message.SelectedGlobalObjectId, out var transformObjectId))
+                {
+                    var transformObject = (Transform) GlobalObjectId.GlobalObjectIdentifierToObjectSlow(transformObjectId);
+                    if(transformObject != null)
+                    {
+                        transformObject.position = trackedClient.GizmoPosition;
+                        transformObject.rotation = trackedClient.GizmoRotation;
+                        transformObject.localScale = trackedClient.GizmoScale;
+                        EditorUtility.SetDirty(transformObject);
+                    }
+                }
             }
         }
         

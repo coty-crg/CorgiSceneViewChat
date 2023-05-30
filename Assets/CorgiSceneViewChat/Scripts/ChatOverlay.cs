@@ -127,6 +127,9 @@ namespace CorgiSceneChat
                     var networkClient = NetworkClient.GetNetworkClient();
                     if(networkClient != null && networkClient.GetIsConnected())
                     {
+                        var transformObjectId = GlobalObjectId.GetGlobalObjectIdSlow(Selection.activeTransform);
+                        var transformObjectIdStr = transformObjectId.ToString();
+
                         networkClient.SendMessage(new NetworkMessageUpdateGizmo()
                         {
                             ClientId = networkClient.GetOurNetId(),
@@ -141,6 +144,7 @@ namespace CorgiSceneChat
                             Scale_x = scale.x,
                             Scale_y = scale.y,
                             Scale_z = scale.z,
+                            SelectedGlobalObjectId = transformObjectIdStr,
                         });
                     }
                 }
