@@ -10,7 +10,7 @@ namespace CorgiSceneChat
     using System;
     using UnityEngine.SceneManagement;
 
-    [Overlay(typeof(SceneView), "Corgi SceneView Chat", defaultLayout: true)]
+    [Overlay(typeof(SceneView), "Corgi SceneView Chat")]
     public class ChatOverlay : Overlay
     {
         private static List<ChatMessage> _messages = new List<ChatMessage>();
