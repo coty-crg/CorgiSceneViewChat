@@ -8,6 +8,10 @@ Preview:
 
 https://github.com/coty-crg/CorgiSceneViewChat/assets/3958573/2e7a3280-7b7b-4dc9-811c-2b850a15493c
 
+![image](https://github.com/coty-crg/CorgiSceneViewChat/assets/3958573/1abbee10-ba74-42db-acd1-da2fb76b1163)
+
 ---
 
-If you have a moment, check out my actually useful stuff on the Unity Asset store here: https://assetstore.unity.com/publishers/28619
+The server's code can be located here: https://github.com/coty-crg/CorgiSceneViewChatServer
+
+Also, check out my actually useful stuff on the Unity Asset store here: https://assetstore.unity.com/publishers/28619
