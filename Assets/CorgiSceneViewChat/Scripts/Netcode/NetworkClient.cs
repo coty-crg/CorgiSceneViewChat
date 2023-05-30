@@ -71,6 +71,11 @@ namespace CorgiSceneChat
 
             var message = (NetworkMessageAddRemoveTrackedGizmo) networkMessage;
 
+            if(editorClient._ourNetId == message.ClientId)
+            {
+                return; 
+            }
+
             if(message.adding)
             {
                 editorClient.TrackedClients.Add(new OtherClient()
