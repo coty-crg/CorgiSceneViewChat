@@ -11,6 +11,9 @@ namespace CorgiSceneChat
         ChangeChannel = 2,
         SetUsername = 3,
         OpenedScene = 4,
+        UpdateGizmo = 5,
+        SetNetId = 6,
+        AddRemoveTrackedGizmo = 7,
     }
 
     public static class NetworkMessageLookup
@@ -21,6 +24,9 @@ namespace CorgiSceneChat
             { NetworkMessageId.ChangeChannel, typeof(NetworkMessageChangeChannel) },
             { NetworkMessageId.SetUsername, typeof(NetworkMessageSetUsername) },
             { NetworkMessageId.OpenedScene, typeof(NetworkMessageOpenedScene) },
+            { NetworkMessageId.UpdateGizmo, typeof(NetworkMessageUpdateGizmo) },
+            { NetworkMessageId.SetNetId, typeof(NetworkMessageSetNetId) },
+            { NetworkMessageId.AddRemoveTrackedGizmo, typeof(NetworkMessageAddRemoveTrackedGizmo) },
         };
     }
 }

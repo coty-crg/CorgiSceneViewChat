@@ -24,6 +24,8 @@ namespace CorgiSceneChat
         private ScrollView _scrollView;
         private TextField _chatInput;
 
+        private DateTime _previousGizmoUpdateAtTime;
+
         public override void OnCreated()
         {
             base.OnCreated();
@@ -31,6 +33,18 @@ namespace CorgiSceneChat
 
             UnityEditor.EditorApplication.update += EditorUpdate;
             UnityEditor.SceneManagement.EditorSceneManager.sceneOpened += OnSceneOpened;
+
+            SceneView.duringSceneGui += OnSceneViewGUI;
+        }
+
+        public override void OnWillBeDestroyed()
+        {
+            base.OnWillBeDestroyed();
+            _overlays.Remove(this); 
+
+            UnityEditor.EditorApplication.update -= EditorUpdate;
+            UnityEditor.SceneManagement.EditorSceneManager.sceneOpened -= OnSceneOpened;
+            SceneView.duringSceneGui -= OnSceneViewGUI;
         }
 
         private void OnSceneOpened(Scene scene, UnityEditor.SceneManagement.OpenSceneMode mode)
@@ -42,13 +56,33 @@ namespace CorgiSceneChat
             });
         }
 
-        public override void OnWillBeDestroyed()
+        private static void OnSceneViewGUI(SceneView sceneView)
         {
-            base.OnWillBeDestroyed();
-            _overlays.Remove(this); 
+            // Handles.FreeMoveHandle()
 
-            UnityEditor.EditorApplication.update -= EditorUpdate;
-            UnityEditor.SceneManagement.EditorSceneManager.sceneOpened -= OnSceneOpened;
+
+            var networkClient = NetworkClient.GetNetworkClient();
+            if(networkClient == null || !networkClient.GetIsConnected())
+            {
+                return;
+            }
+
+            foreach(var otherClient in networkClient.TrackedClients)
+            {
+                var center = otherClient.GizmoPosition;
+                var up = otherClient.GizmoRotation * Vector3.up;
+                var right = otherClient.GizmoRotation * Vector3.right;
+                var forward = otherClient.GizmoRotation * Vector3.forward;
+
+                Handles.color = Color.blue;
+                Handles.DrawLine(center, center + forward);
+
+                Handles.color = Color.red;
+                Handles.DrawLine(center, center + right);
+
+                Handles.color = Color.green;
+                Handles.DrawLine(center, center + up);
+            }
         }
 
         private void EditorUpdate()
@@ -78,6 +112,38 @@ namespace CorgiSceneChat
             if(_automaticallyOpened && System.DateTime.UtcNow > _autoOpenedAtTime + new TimeSpan(0, 0, 0, 5, 0))
             {
                 OnInputFocusLostEvent(null); 
+            }
+
+            if(System.DateTime.UtcNow > _previousGizmoUpdateAtTime + Constants.Network.GizmoSendRate)
+            {
+                _previousGizmoUpdateAtTime = System.DateTime.UtcNow;
+
+                if(Selection.activeTransform != null)
+                {
+                    var position = Selection.activeTransform.position;
+                    var rotation = Selection.activeTransform.rotation;
+                    var scale = Selection.activeTransform.localScale;
+
+                    var networkClient = NetworkClient.GetNetworkClient();
+                    if(networkClient != null && networkClient.GetIsConnected())
+                    {
+                        networkClient.SendMessage(new NetworkMessageUpdateGizmo()
+                        {
+                            ClientId = networkClient.GetOurNetId(),
+                            gizmoMode = 0,
+                            Position_x = position.x,
+                            Position_y = position.y,
+                            Position_z = position.z,
+                            Rotation_x = rotation.x,
+                            Rotation_y = rotation.y,
+                            Rotation_z = rotation.z,
+                            Rotation_w = rotation.w,
+                            Scale_x = scale.x,
+                            Scale_y = scale.y,
+                            Scale_z = scale.z,
+                        });
+                    }
+                }
             }
         }
 

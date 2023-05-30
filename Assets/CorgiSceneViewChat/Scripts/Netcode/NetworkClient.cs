@@ -13,6 +13,8 @@ namespace CorgiSceneChat
 {
     public class NetworkClient
     {
+        public List<OtherClient> TrackedClients = new List<OtherClient>(); 
+
         private static NetworkClient editorClient;
         private Socket clientSocket;
 
@@ -23,15 +25,70 @@ namespace CorgiSceneChat
         private byte[] _receiveBuffer = new byte[1024 * 16];
         private byte[] _sendBuffer = new byte[1024 * 16];
 
+        private int _ourNetId;
+
         private static Dictionary<NetworkMessageId, System.Action<NetworkMessage>> networkCallbacks = new Dictionary<NetworkMessageId, Action<NetworkMessage>>()
         {
             { NetworkMessageId.ChatMessage, OnNetworkMessage_ChatMessage },
+            { NetworkMessageId.UpdateGizmo, OnNetworkMessage_UpdatedGizmo },
+            { NetworkMessageId.SetNetId, OnNetworkMessage_SetNetId },
+            { NetworkMessageId.AddRemoveTrackedGizmo, OnNetworkMessage_AddRemoveTrackedGizmo },
         };
 
         private static void OnNetworkMessage_ChatMessage(NetworkMessage networkMessage)
         {
             var chatMessage = (NetworkMessageChatMessage) networkMessage;
             ChatOverlay.OnChatMessageReceived(chatMessage.chatMessage); 
+        }
+
+        private static void OnNetworkMessage_UpdatedGizmo(NetworkMessage networkMessage)
+        {
+            if (editorClient == null) return;
+
+            var message = (NetworkMessageUpdateGizmo) networkMessage;
+            foreach(var trackedClient in editorClient.TrackedClients)
+            {
+                if (trackedClient.ClientId != message.ClientId) continue;
+
+                trackedClient.GizmoMode = message.gizmoMode;
+                trackedClient.GizmoPosition = new Vector3(message.Position_x, message.Position_y, message.Position_z);
+                trackedClient.GizmoRotation = new Quaternion(message.Rotation_x, message.Rotation_y, message.Rotation_z, message.Rotation_w);
+                trackedClient.GizmoScale = new Vector3(message.Scale_x, message.Scale_y, message.Scale_z); 
+            }
+        }
+        
+        private static void OnNetworkMessage_SetNetId(NetworkMessage networkMessage)
+        {
+            if (editorClient == null) return;
+
+            var message = (NetworkMessageSetNetId) networkMessage;
+            editorClient._ourNetId = message.ClientId;
+        }
+
+        private static void OnNetworkMessage_AddRemoveTrackedGizmo(NetworkMessage networkMessage)
+        {
+            if (editorClient == null) return;
+
+            var message = (NetworkMessageAddRemoveTrackedGizmo) networkMessage;
+
+            if(message.adding)
+            {
+                editorClient.TrackedClients.Add(new OtherClient()
+                {
+                     ClientId = message.ClientId,
+                });
+            }
+
+            if(message.removing)
+            {
+                for(var i = editorClient.TrackedClients.Count - 1; i >= 0; --i)
+                {
+                    if (editorClient.TrackedClients[i].ClientId == message.ClientId)
+                    {
+                        editorClient.TrackedClients.RemoveAt(i); 
+                    }
+                }
+            }
         }
 
         public void SendMessage(NetworkMessage message)
@@ -217,6 +274,11 @@ namespace CorgiSceneChat
         public bool GetIsConnected()
         {
             return _connected;
+        }
+
+        public int GetOurNetId()
+        {
+            return _ourNetId;
         }
     }
 }
