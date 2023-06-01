@@ -86,24 +86,49 @@ namespace CorgiSceneChat
 
                 if (!string.IsNullOrEmpty(otherClient.SelectedTransformStr))
                 {
-                    if (GlobalObjectId.TryParse(otherClient.SelectedTransformStr, out var transformObjectId))
-                    {
-                        var unityObject = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(transformObjectId);
-                        if (unityObject != null)
-                        {
-                            var transformObject = unityObject as Transform;
-                            if (transformObject != null)
-                            {
-                                transformObject.position = otherClient.GizmoPosition;
-                                transformObject.rotation = otherClient.GizmoRotation;
-                                transformObject.localScale = otherClient.GizmoScale;
+                    var unityObject = GetObjectFromGlobalId(otherClient.SelectedTransformStr);
 
-                                EditorUtility.SetDirty(transformObject);
-                            }
+                    if (unityObject != null)
+                    {
+                        var transformObject = unityObject as Transform;
+                        if (transformObject != null)
+                        {
+                            transformObject.position = otherClient.GizmoPosition;
+                            transformObject.rotation = otherClient.GizmoRotation;
+                            transformObject.localScale = otherClient.GizmoScale;
+
+                            EditorUtility.SetDirty(transformObject); 
                         }
                     }
                 }
             }
+        }
+
+        private static Dictionary<int, UnityEngine.Object> _objectLookupCache = new Dictionary<int, UnityEngine.Object>();
+
+        private static UnityEngine.Object GetObjectFromGlobalId(string idString)
+        {
+            var idHash = idString.GetHashCode();
+
+            if (_objectLookupCache.TryGetValue(idHash, out var obj))
+            {
+                return obj;
+            }
+
+            if (GlobalObjectId.TryParse(idString, out var transformObjectId))
+            {
+                var unityObject = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(transformObjectId);
+                if(unityObject != null)
+                {
+
+                    _objectLookupCache.Add(idHash, unityObject);
+                    return unityObject; 
+                }
+            }
+
+            _objectLookupCache.Add(idHash, null);
+
+            return null; 
         }
 
         private void EditorUpdate()
@@ -198,6 +223,8 @@ namespace CorgiSceneChat
 
         private void RebuildScrollViewContent()
         {
+            if (_scrollView == null) return;
+
             _scrollView.contentContainer.Clear();
 
             for (var i = 0; i < _messages.Count; ++i)
@@ -268,7 +295,10 @@ namespace CorgiSceneChat
         private void OnInputFocusEvent(FocusEvent e)
         {
             _focused = true; 
-            _automaticallyOpened = false; 
+            _automaticallyOpened = false;
+
+            if (_scrollView == null) return; 
+
             _scrollView.style.minHeight = 32;
             _scrollView.style.maxHeight = 128;
 
@@ -280,6 +310,9 @@ namespace CorgiSceneChat
         {
             _focused = false;
             _automaticallyOpened = false;
+
+            if (_scrollView == null) return;
+
             _scrollView.style.minHeight = 0;
             _scrollView.style.maxHeight = 0;
 
